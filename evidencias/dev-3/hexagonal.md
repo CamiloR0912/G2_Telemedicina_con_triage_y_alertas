@@ -46,3 +46,63 @@ crea la raíz usando su constructor package-private, que es parte del límite de
 | `HistorialCitas` | Puerto secundario (hacia Agenda) | Ya existe |
 | Implementación de `HistorialCitas` | Adaptador secundario (Agenda) | **Falta** (Agenda es de Dev 1) |
 | `ControlAccesoHistoriaService`, `HistoriaClinicaFactory`, `HistoriaClinica`, `RegistroConsulta`, `RegistroAcceso` | Núcleo (dominio) | Ya existe |
+
+## Paso 2 · Puerto primario `HistoriaClinicaUseCase`
+
+- `HistoriaClinicaUseCase` declara lo que el subdominio promete: `registrar` (HU-01), `consultar` (HU-06) y
+  `registrarConsulta` (HU-05).
+- `HistoriaClinicaService` lo implementa: carga la historia, delega las reglas en `ControlAccesoHistoriaService` /
+  `HistoriaClinicaFactory` y la guarda (así el registro de acceso de HU-06 queda persistido).
+- `HistoriaClinicaController` depende del puerto (`HistoriaClinicaUseCase`), nunca de la clase concreta.
+- Se agregó `HistorialCitasAgendaSimuladaAdapter`: adaptador secundario simulado de `HistorialCitas` que lee las
+  parejas `medico:paciente` de `application.yaml` mientras Agenda (Dev 1) no exponga sus citas.
+- Como el servicio necesita persistencia para arrancar, este paso usó un adaptador **temporal en memoria**.
+
+## Paso 3 · Puerto secundario mínimo + adaptador JPA explícito
+
+- `RepositorioHistoriasClinicas` tiene solo los 3 métodos que el caso de uso llama
+  (`buscarPorPacienteId`, `existePorPacienteId`, `guardar`), no los ~30 de `JpaRepository`.
+- `HistoriaClinicaRepository` (Spring Data) sigue siendo el detalle técnico; `HistoriaClinicaRepositoryJpaAdapter`
+  traduce entre los dos contratos.
+- El dominio **no** lleva anotaciones JPA: el adaptador usa su propio `HistoriaClinicaJpaEntity` y reconstruye el
+  agregado con `HistoriaClinica.reconstituir(...)`, que vuelve a pasar por las invariantes de la raíz.
+- El adaptador en memoria del paso 2 se eliminó y se reemplazó por el JPA **sin cambiar una línea del núcleo**:
+  prueba de que el adaptador es sustituible.
+
+## Paso 4 · Paquetes por rol hexagonal
+
+| Paquete | Clases |
+|---|---|
+| `historiaclinica.dominio` | `HistoriaClinica`, `RegistroConsulta`, `RegistroAcceso`, `ControlAccesoHistoriaService`, `HistoriaClinicaFactory`, `HistorialCitas`, excepciones |
+| `historiaclinica.aplicacion` | `HistoriaClinicaUseCase`, `RepositorioHistoriasClinicas`, `HistoriaClinicaService` |
+| `historiaclinica.infraestructura.entrada.web` | `HistoriaClinicaController`, `HistoriaClinicaRequest`, `RegistroConsultaRequest`, `HistoriaClinicaResponse`, `RegistroConsultaResponse`, `HistoriaClinicaMapper`, `HistoriaClinicaExceptionHandler` |
+| `historiaclinica.infraestructura.salida.persistencia` | `HistoriaClinicaRepository`, `HistoriaClinicaRepositoryJpaAdapter`, `HistoriaClinicaJpaEntity` |
+| `historiaclinica.infraestructura.salida.agenda` | `HistorialCitasAgendaSimuladaAdapter` |
+| `historiaclinica.infraestructura.config` | `HistoriaClinicaConfig` |
+
+Diferencias con `rica-api`, justificadas:
+- `HistoriaClinicaFactory` y `ControlAccesoHistoriaService` quedan en **dominio** (no en aplicación): no dependen
+  de ningún repositorio y usan los métodos package-private de la raíz, que protegen el límite del agregado.
+- `HistorialCitas` queda en **dominio** porque lo usa el servicio de dominio; si se moviera a `aplicacion`,
+  el dominio dependería de aplicación (dependencia hacia afuera).
+- `HistoriaClinicaConfig` registra como beans las piezas del dominio, para que el núcleo no lleve `@Component`.
+
+**Prueba del núcleo limpio:** los `import` de `dominio` son solo `java.*`; los de `aplicacion` son `java.*`,
+`dominio.*` y `@Service`. Ninguna clase del núcleo importa `infraestructura`.
+
+## Paso 5 · Probar el núcleo sin infraestructura
+
+`RepositorioHistoriasClinicasFalso` (un `Map` en memoria) + `HistoriaClinicaServiceConFalsoTest`: registra una
+historia, registra una consulta, la consulta con un médico con cita y verifica que el acceso quedó auditado y que un
+médico sin cita es rechazado, sin `@SpringBootTest`, sin `@Mock` y sin base de datos. `HistorialCitas` también se
+cumple con una lambda.
+
+## Endpoints (adaptador primario HTTP)
+
+| Método | Ruta | HU | Respuestas |
+|---|---|---|---|
+| `POST` | `/api/historias-clinicas` | HU-01 | 201, 400 (datos inválidos), 409 (ya existe) |
+| `GET` | `/api/historias-clinicas/{pacienteId}` + header `X-Medico-Id` | HU-06 | 200, 403 (sin cita), 404 |
+| `POST` | `/api/historias-clinicas/{pacienteId}/consultas` + header `X-Medico-Id` | HU-05 | 201, 403, 404, 409 (consulta repetida) |
+
+Citas simuladas por defecto: `med-1:pac-1`, `med-2:pac-2` (`application.yaml`).
