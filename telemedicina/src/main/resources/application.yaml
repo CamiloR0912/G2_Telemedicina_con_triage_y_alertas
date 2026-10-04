@@ -1,3 +1,8 @@
 spring:
   application:
     name: telemedicina
+
+# Citas simuladas médico:paciente mientras Agenda (Dev 1) no expone las suyas
+historia-clinica:
+  agenda-simulada:
+    citas: med-1:pac-1,med-2:pac-2
