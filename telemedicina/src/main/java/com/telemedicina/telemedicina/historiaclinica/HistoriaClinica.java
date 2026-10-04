@@ -33,6 +33,20 @@ public class HistoriaClinica {
         this.antecedentes = antecedentes;
     }
 
+    /**
+     * Reconstruye una historia ya existente (p. ej. leída de persistencia). Los registros se vuelven a
+     * agregar por la raíz, así que las invariantes del agregado se siguen cumpliendo.
+     */
+    public static HistoriaClinica reconstituir(String id, String pacienteId, String grupoSanguineo,
+                                               List<String> alergias, String antecedentes,
+                                               List<RegistroConsulta> registrosConsulta,
+                                               List<RegistroAcceso> registrosAcceso) {
+        HistoriaClinica historia = new HistoriaClinica(id, pacienteId, grupoSanguineo, alergias, antecedentes);
+        registrosConsulta.forEach(historia::agregarConsulta);
+        registrosAcceso.forEach(historia::registrarAcceso);
+        return historia;
+    }
+
     /** HU-06 · deja constancia de que un médico consultó esta historia. */
     void registrarAcceso(RegistroAcceso acceso) {
         if (acceso == null) {
@@ -44,15 +58,19 @@ public class HistoriaClinica {
     /** HU-05 · agrega diagnóstico, notas y receta simplificada de una consulta. */
     RegistroConsulta registrarConsulta(String consultaId, String medicoId, String diagnostico,
                                        String notas, String recetaSimplificada, LocalDateTime fecha) {
-        boolean yaRegistrada = registrosConsulta.stream()
-                .anyMatch(r -> r.getConsultaId().equals(consultaId));
-        if (yaRegistrada) {
-            throw new IllegalStateException("La consulta " + consultaId + " ya tiene registro clínico");
-        }
         RegistroConsulta registro = new RegistroConsulta(
                 consultaId, medicoId, diagnostico, notas, recetaSimplificada, fecha);
-        registrosConsulta.add(registro);
+        agregarConsulta(registro);
         return registro;
+    }
+
+    private void agregarConsulta(RegistroConsulta registro) {
+        boolean yaRegistrada = registrosConsulta.stream()
+                .anyMatch(r -> r.getConsultaId().equals(registro.getConsultaId()));
+        if (yaRegistrada) {
+            throw new IllegalStateException("La consulta " + registro.getConsultaId() + " ya tiene registro clínico");
+        }
+        registrosConsulta.add(registro);
     }
 
     public String getId() { return id; }

@@ -38,6 +38,12 @@ public class RegistroConsulta {
         this.fechaRegistro = fechaRegistro;
     }
 
+    /** Reconstruye un registro leído de persistencia; solo entra al agregado vía {@link HistoriaClinica#reconstituir}. */
+    public static RegistroConsulta reconstituir(String consultaId, String medicoId, String diagnostico,
+                                                String notas, String recetaSimplificada, LocalDateTime fechaRegistro) {
+        return new RegistroConsulta(consultaId, medicoId, diagnostico, notas, recetaSimplificada, fechaRegistro);
+    }
+
     public String getConsultaId() { return consultaId; }
     public String getMedicoId() { return medicoId; }
     public String getDiagnostico() { return diagnostico; }
