@@ -8,3 +8,8 @@ spring:
     hibernate:
       ddl-auto: create-drop
     open-in-view: false
+
+# Citas simuladas médico:paciente mientras Agenda (Dev 1) no expone las suyas
+historia-clinica:
+  agenda-simulada:
+    citas: med-1:pac-1,med-2:pac-2
