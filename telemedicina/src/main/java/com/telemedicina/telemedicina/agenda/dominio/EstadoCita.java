@@ -1,4 +1,4 @@
-package com.telemedicina.telemedicina.agenda;
+package com.telemedicina.telemedicina.agenda.dominio;
 
 /**
  * En el contexto de Agenda, "estado" siempre significa el estado de la Cita.

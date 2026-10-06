@@ -1,4 +1,4 @@
-package com.telemedicina.telemedicina.agenda;
+package com.telemedicina.telemedicina.agenda.dominio;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -23,12 +23,30 @@ public class Cita {
 	private EstadoCita estado;
 
 	Cita(UUID id, String pacienteId, String medicoId, String especialidad, FranjaHoraria franja) {
+		this(id, pacienteId, medicoId, especialidad, franja, EstadoCita.AGENDADA);
+	}
+
+	private Cita(UUID id, String pacienteId, String medicoId, String especialidad, FranjaHoraria franja,
+			EstadoCita estado) {
 		this.id = id;
 		this.pacienteId = pacienteId;
 		this.medicoId = medicoId;
 		this.especialidad = especialidad;
 		this.franja = franja;
-		this.estado = EstadoCita.AGENDADA;
+		this.estado = estado;
+	}
+
+	/**
+	 * Rehidrata una Cita que ya existía (por ejemplo, leída de la base de datos).
+	 * No es "agendar": no valida reglas de creación ni genera id nuevo. Una Cita
+	 * nueva se sigue creando solo con {@link CitaFactory#agendar}.
+	 */
+	public static Cita reconstituir(UUID id, String pacienteId, String medicoId, String especialidad,
+			FranjaHoraria franja, EstadoCita estado) {
+		Objects.requireNonNull(id, "El id de la cita es obligatorio");
+		Objects.requireNonNull(franja, "La franja horaria es obligatoria");
+		Objects.requireNonNull(estado, "El estado de la cita es obligatorio");
+		return new Cita(id, pacienteId, medicoId, especialidad, franja, estado);
 	}
 
 	/** HU-07: al cancelar, la cita deja de estar activa y su cupo queda libre. */

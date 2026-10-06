@@ -1,4 +1,4 @@
-package com.telemedicina.telemedicina.agenda;
+package com.telemedicina.telemedicina.agenda.dominio;
 
 import java.util.Collection;
 import java.util.Objects;

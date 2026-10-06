@@ -1,4 +1,4 @@
-package com.telemedicina.telemedicina.agenda;
+package com.telemedicina.telemedicina.agenda.dominio;
 
 public class FranjaNoDisponibleException extends RuntimeException {
 
