@@ -1,0 +1,29 @@
+meta {
+  name: 14 Agendar otra cita en la franja que libero la reprogramacion
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/citas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteAgenda2}}",
+    "medicoId": "{{medicoAgenda}}",
+    "especialidad": "Medicina general",
+    "inicio": "{{t0900}}",
+    "fin": "{{t0930}}"
+  }
+}
+
+tests {
+  test("responde 201 Created: 09:00 quedo libre al reprogramar", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  bru.setVar("cita2Id", res.getBody().id);
+}

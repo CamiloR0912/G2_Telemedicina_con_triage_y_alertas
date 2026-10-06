@@ -1,0 +1,31 @@
+meta {
+  name: 07 Agendar con fin antes del inicio (400)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/citas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteAgenda3}}",
+    "medicoId": "{{medicoAgenda2}}",
+    "especialidad": "Medicina general",
+    "inicio": "{{t1000}}",
+    "fin": "{{t0930}}"
+  }
+}
+
+tests {
+  test("responde 400 Bad Request", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("indica que el inicio debe ser anterior al fin", function () {
+    expect(res.getBody().detail).to.contain("anterior al fin");
+  });
+}

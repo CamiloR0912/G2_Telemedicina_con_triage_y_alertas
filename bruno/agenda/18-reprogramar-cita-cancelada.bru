@@ -1,0 +1,28 @@
+meta {
+  name: 18 Reprogramar una cita cancelada (409)
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{baseUrl}}/api/citas/{{cita2Id}}/reprogramar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "inicio": "{{t1000}}",
+    "fin": "{{t1100}}"
+  }
+}
+
+tests {
+  test("responde 409 Conflict", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("indica que no se reprograma una cita cancelada", function () {
+    expect(res.getBody().detail).to.contain("cancelada");
+  });
+}
