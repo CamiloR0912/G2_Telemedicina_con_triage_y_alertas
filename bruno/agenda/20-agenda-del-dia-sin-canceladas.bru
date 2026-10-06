@@ -1,0 +1,28 @@
+meta {
+  name: 20 Agenda del dia sin citas canceladas y en orden
+  type: http
+  seq: 20
+}
+
+get {
+  url: {{baseUrl}}/api/citas?medicoId={{medicoAgenda}}&fecha={{dia}}
+  body: none
+  auth: none
+}
+
+params:query {
+  medicoId: {{medicoAgenda}}
+  fecha: {{dia}}
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("muestra 09:00 (nueva) y 11:00 (reprogramada), sin la cancelada", function () {
+    const ids = res.getBody().map(c => c.id);
+    expect(ids).to.eql([bru.getVar("cita3Id"), bru.getVar("citaId")]);
+    expect(ids).to.not.include(bru.getVar("cita2Id"));
+  });
+}

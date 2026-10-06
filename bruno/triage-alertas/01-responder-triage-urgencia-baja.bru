@@ -1,0 +1,54 @@
+meta {
+  name: 01 Responder triage con urgencia baja (HU-03)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/triage
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "pac-bajo",
+    "citaId": "{{citaBaja}}",
+    "respuestas": [
+      { "sintoma": "fiebre", "intensidad": 3 },
+      { "sintoma": "tos", "intensidad": 2 }
+    ]
+  }
+}
+
+script:pre-request {
+  const sufijo = Date.now();
+  bru.setVar("citaBaja", "cita-baja-" + sufijo);
+  bru.setVar("citaMedia", "cita-media-" + sufijo);
+  bru.setVar("citaAlta", "cita-alta-" + sufijo);
+}
+
+tests {
+  test("responde 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("clasifica como bajo y queda completado", function () {
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").and.not.empty;
+    expect(body.citaId).to.equal(bru.getVar("citaBaja"));
+    expect(body.nivelUrgencia).to.equal("bajo");
+    expect(body.completado).to.equal(true);
+    expect(body.respuestas).to.have.lengthOf(2);
+  });
+
+  test("urgencia baja no genera alerta", function () {
+    expect(res.getBody().alerta).to.equal(null);
+  });
+
+  bru.setVar("cuestionarioBajoId", res.getBody().id);
+}
+
+docs {
+  Genera ids de cita unicos para esta ejecucion; ejecuta la carpeta en orden.
+}

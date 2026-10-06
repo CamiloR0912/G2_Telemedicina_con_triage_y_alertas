@@ -1,0 +1,32 @@
+meta {
+  name: 12 Reprogramar cita (HU-07)
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/citas/{{citaId}}/reprogramar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "inicio": "{{t1100}}",
+    "fin": "{{t1130}}"
+  }
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("la cita queda en la nueva franja y reprogramada", function () {
+    const body = res.getBody();
+    expect(body.inicio).to.equal(bru.getVar("t1100"));
+    expect(body.fin).to.equal(bru.getVar("t1130"));
+    expect(body.estado).to.equal("REPROGRAMADA");
+    expect(body.activa).to.equal(true);
+  });
+}

@@ -1,0 +1,28 @@
+meta {
+  name: 03 Disponibilidad de una franja contigua
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/citas/disponibilidad?medicoId={{medicoAgenda}}&pacienteId={{pacienteAgenda2}}&inicio={{t0930}}&fin={{t1000}}
+  body: none
+  auth: none
+}
+
+params:query {
+  medicoId: {{medicoAgenda}}
+  pacienteId: {{pacienteAgenda2}}
+  inicio: {{t0930}}
+  fin: {{t1000}}
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("tocarse en el borde (09:30) no cuenta como solapamiento", function () {
+    expect(res.getBody().disponible).to.equal(true);
+  });
+}

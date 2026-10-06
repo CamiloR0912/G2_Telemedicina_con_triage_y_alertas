@@ -1,0 +1,21 @@
+meta {
+  name: 07 Consultar historia inexistente (404)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/historias-clinicas/no-existe
+  body: none
+  auth: none
+}
+
+headers {
+  X-Medico-Id: {{medicoConCita}}
+}
+
+tests {
+  test("responde 404 Not Found", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

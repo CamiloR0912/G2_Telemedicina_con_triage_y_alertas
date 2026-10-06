@@ -1,0 +1,24 @@
+meta {
+  name: 15 Reprogramar a una franja ocupada (409)
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/api/citas/{{citaId}}/reprogramar
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "inicio": "{{t0900}}",
+    "fin": "{{t0930}}"
+  }
+}
+
+tests {
+  test("responde 409 Conflict", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+}
