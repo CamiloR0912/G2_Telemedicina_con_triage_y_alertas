@@ -1,0 +1,42 @@
+meta {
+  name: 01 Registrar historia del paciente con cita (pac-1)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/historias-clinicas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteConCita}}",
+    "grupoSanguineo": "o+",
+    "alergias": ["penicilina", " penicilina ", ""],
+    "antecedentes": "Hipertension controlada"
+  }
+}
+
+tests {
+  test("responde 201 la primera vez o 409 si ya existe", function () {
+    expect([201, 409]).to.include(res.getStatus());
+  });
+
+  test("si la crea, normaliza grupo sanguineo y alergias", function () {
+    if (res.getStatus() !== 201) return;
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").and.not.empty;
+    expect(body.pacienteId).to.equal("pac-1");
+    expect(body.grupoSanguineo).to.equal("O+");
+    expect(body.alergias).to.eql(["penicilina"]);
+    expect(body.registrosConsulta).to.eql([]);
+    expect(body.registrosAcceso).to.eql([]);
+  });
+}
+
+docs {
+  Prepara los datos: pac-1 tiene cita simulada con med-1 (application.yaml).
+  La primera vez tras arrancar la app responde 201; en ejecuciones siguientes 409 (ya existe).
+}

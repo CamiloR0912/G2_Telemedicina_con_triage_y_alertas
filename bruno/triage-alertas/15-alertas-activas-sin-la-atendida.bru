@@ -1,0 +1,22 @@
+meta {
+  name: 15 Panel de alertas ya no muestra la alerta atendida
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/api/alertas/activas
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("la alerta atendida sale del panel", function () {
+    const ids = res.getBody().map(a => a.cuestionarioId);
+    expect(ids).to.not.include(bru.getVar("cuestionarioAltoId"));
+  });
+}

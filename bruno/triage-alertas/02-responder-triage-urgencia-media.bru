@@ -1,0 +1,32 @@
+meta {
+  name: 02 Responder triage con urgencia media
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/triage
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "pac-medio",
+    "citaId": "{{citaMedia}}",
+    "respuestas": [
+      { "sintoma": "dolor de cabeza", "intensidad": 6 }
+    ]
+  }
+}
+
+tests {
+  test("responde 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("intensidad moderada (>= 5) clasifica como medio sin alerta", function () {
+    expect(res.getBody().nivelUrgencia).to.equal("medio");
+    expect(res.getBody().alerta).to.equal(null);
+  });
+}

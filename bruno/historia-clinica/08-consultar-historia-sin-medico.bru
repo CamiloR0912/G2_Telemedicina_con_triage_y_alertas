@@ -1,0 +1,17 @@
+meta {
+  name: 08 Consultar historia sin encabezado X-Medico-Id (400)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/historias-clinicas/{{pacienteConCita}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 400 Bad Request", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+}

@@ -1,0 +1,33 @@
+meta {
+  name: 05 Consultar historia con medico que tiene cita (HU-06)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/historias-clinicas/{{pacienteConCita}}
+  body: none
+  auth: none
+}
+
+headers {
+  X-Medico-Id: {{medicoConCita}}
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("devuelve la historia de pac-1", function () {
+    expect(res.getBody().pacienteId).to.equal("pac-1");
+  });
+
+  test("deja auditado el acceso del medico", function () {
+    const accesos = res.getBody().registrosAcceso;
+    expect(accesos).to.be.an("array").that.is.not.empty;
+    const ultimo = accesos[accesos.length - 1];
+    expect(ultimo.medicoId).to.equal("med-1");
+    expect(ultimo.fechaHora).to.be.a("string");
+  });
+}

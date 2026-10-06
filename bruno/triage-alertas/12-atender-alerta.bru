@@ -1,0 +1,30 @@
+meta {
+  name: 12 Enfermeria atiende la alerta (HU-09)
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/triage/{{cuestionarioAltoId}}/alerta/atender
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "enfermeriaId": "{{enfermeriaId}}"
+  }
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("la alerta queda atendida por enfermeria", function () {
+    const alerta = res.getBody().alerta;
+    expect(alerta.activa).to.equal(false);
+    expect(alerta.atendidaPor).to.equal("enf-1");
+    expect(alerta.fechaAtencion).to.be.a("string");
+  });
+}

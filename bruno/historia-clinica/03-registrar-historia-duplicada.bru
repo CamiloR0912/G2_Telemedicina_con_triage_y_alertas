@@ -1,0 +1,35 @@
+meta {
+  name: 03 Registrar historia duplicada (409)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/historias-clinicas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteNuevo}}",
+    "grupoSanguineo": "A+",
+    "alergias": [],
+    "antecedentes": ""
+  }
+}
+
+tests {
+  test("responde 409 Conflict", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("devuelve un ProblemDetail", function () {
+    expect(res.getBody().status).to.equal(409);
+    expect(res.getBody().detail).to.be.a("string");
+  });
+}
+
+docs {
+  Usa el paciente creado en la peticion 02.
+}

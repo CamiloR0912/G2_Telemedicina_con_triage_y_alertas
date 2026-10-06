@@ -1,0 +1,30 @@
+meta {
+  name: 11 Panel de alertas activas (HU-09)
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/alertas/activas
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("incluye la alerta del triage de urgencia alta", function () {
+    const fila = res.getBody().find(a => a.cuestionarioId === bru.getVar("cuestionarioAltoId"));
+    expect(fila, "alerta del cuestionario alto").to.be.an("object");
+    expect(fila.citaId).to.equal(bru.getVar("citaAlta"));
+    expect(fila.nivelUrgencia).to.equal("alto");
+    expect(fila.notificada).to.equal(true);
+  });
+
+  test("no incluye cuestionarios sin alerta", function () {
+    const ids = res.getBody().map(a => a.cuestionarioId);
+    expect(ids).to.not.include(bru.getVar("cuestionarioBajoId"));
+  });
+}
