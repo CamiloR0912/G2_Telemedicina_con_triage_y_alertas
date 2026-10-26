@@ -1,0 +1,26 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: historia-clinica-service
+  # Base de datos propia del servicio (Database per Service). En archivo: la proyección de triages
+  # completados que llega por Kafka no se puede perder al reiniciar (el offset ya quedó confirmado).
+  datasource:
+    url: jdbc:h2:file:./data/historia-clinica
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  grpc:
+    client:
+      channel:
+        agenda:
+          target: static://localhost:9090
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: historia-clinica-service
+      auto-offset-reset: earliest
