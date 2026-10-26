@@ -1,0 +1,38 @@
+meta {
+  name: 10 Registrar la misma consulta otra vez (409)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
+  body: json
+  auth: none
+}
+
+headers {
+  X-Medico-Id: {{medicoConCita}}
+}
+
+body:json {
+  {
+    "consultaId": "{{consultaId}}",
+    "diagnostico": "Otro diagnostico",
+    "notas": "",
+    "recetaSimplificada": ""
+  }
+}
+
+tests {
+  test("responde 409 Conflict", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("indica que la consulta ya tiene registro", function () {
+    expect(res.getBody().detail).to.contain("ya tiene registro clínico");
+  });
+}
+
+docs {
+  Reutiliza el consultaId de la peticion 09.
+}

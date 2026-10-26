@@ -1,0 +1,42 @@
+meta {
+  name: 00 Agendar cita entre med-1 y pac-1 (precondicion)
+  type: http
+  seq: 0
+}
+
+post {
+  url: {{baseUrl}}/api/citas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteConCita}}",
+    "medicoId": "{{medicoConCita}}",
+    "especialidad": "Medicina general",
+    "inicio": "{{citaHcInicio}}",
+    "fin": "{{citaHcFin}}"
+  }
+}
+
+script:pre-request {
+  // Manana a las 08:00, en hora local
+  const p = n => String(n).padStart(2, "0");
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const dia = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  bru.setVar("citaHcInicio", dia + "T08:00:00");
+  bru.setVar("citaHcFin", dia + "T08:30:00");
+}
+
+tests {
+  test("responde 201, o 409 si la cita ya se agendo en una ejecucion anterior", function () {
+    expect([201, 409]).to.include(res.getStatus());
+  });
+}
+
+docs {
+  Un medico solo ve la historia de pacientes con los que tiene cita (HU-06), y Historia clinica
+  le pregunta a Agenda. med-2 nunca recibe cita con pac-1, por eso es el "medico sin cita".
+}

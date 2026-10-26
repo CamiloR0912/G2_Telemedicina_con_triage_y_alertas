@@ -1,0 +1,31 @@
+meta {
+  name: 05 Agendar con paciente ocupado en esa franja (409)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/citas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteAgenda}}",
+    "medicoId": "{{medicoAgenda2}}",
+    "especialidad": "Pediatria",
+    "inicio": "{{t0900}}",
+    "fin": "{{t0930}}"
+  }
+}
+
+tests {
+  test("responde 409 Conflict", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("indica que el paciente ya tiene cita", function () {
+    expect(res.getBody().detail).to.contain("El paciente");
+  });
+}

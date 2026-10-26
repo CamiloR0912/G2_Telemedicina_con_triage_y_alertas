@@ -1,0 +1,27 @@
+meta {
+  name: 11 Agenda del dia del medico (HU-08)
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/api/citas?medicoId={{medicoAgenda}}&fecha={{dia}}
+  body: none
+  auth: none
+}
+
+params:query {
+  medicoId: {{medicoAgenda}}
+  fecha: {{dia}}
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("contiene solo la cita agendada del medico", function () {
+    const ids = res.getBody().map(c => c.id);
+    expect(ids).to.eql([bru.getVar("citaId")]);
+  });
+}

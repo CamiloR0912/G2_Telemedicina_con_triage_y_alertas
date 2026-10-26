@@ -1,0 +1,17 @@
+meta {
+  name: 10 Buscar cita inexistente (404)
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/citas/00000000-0000-0000-0000-000000000000
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 404 Not Found", function () {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

@@ -1,0 +1,21 @@
+meta {
+  name: 17 Cancelar una cita ya cancelada (409)
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/api/citas/{{cita2Id}}/cancelar
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 409 Conflict", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("indica que ya esta cancelada", function () {
+    expect(res.getBody().detail).to.contain("ya está cancelada");
+  });
+}
