@@ -1,11 +1,11 @@
 meta {
   name: 12 Registrar consulta con medico sin cita (403)
   type: http
-  seq: 12
+  seq: 14
 }
 
 post {
-  url: {{baseUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
+  url: {{historiaUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
   body: json
   auth: none
 }
@@ -16,6 +16,7 @@ headers {
 
 body:json {
   {
+    "citaId": "{{citaHistoriaId}}",
     "consultaId": "cons-no-autorizada",
     "diagnostico": "No deberia guardarse",
     "notas": "",

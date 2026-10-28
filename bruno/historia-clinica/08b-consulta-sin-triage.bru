@@ -1,0 +1,32 @@
+meta {
+  name: 08b Rechazar consulta sin triage
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{historiaUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
+  body: json
+  auth: none
+}
+
+headers {
+  X-Medico-Id: {{medicoConCita}}
+}
+
+body:json {
+  {
+    "citaId": "{{citaHistoriaId}}",
+    "consultaId": "sin-triage",
+    "diagnostico": "Faringitis aguda",
+    "notas": "Reposo y abundante liquido",
+    "recetaSimplificada": "Acetaminofen 500 mg cada 8 horas por 3 dias"
+  }
+}
+
+tests {
+  test("rechaza la consulta sin triage completado", function () {
+    expect(res.getStatus()).to.equal(409);
+    expect(res.getBody().detail).to.contain("triage");
+  });
+}

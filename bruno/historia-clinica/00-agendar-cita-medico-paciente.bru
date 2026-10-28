@@ -1,11 +1,11 @@
 meta {
-  name: 00 Agendar cita entre med-1 y pac-1 (precondicion)
+  name: 00 Agendar cita entre medico y paciente nuevos (precondicion)
   type: http
   seq: 0
 }
 
 post {
-  url: {{baseUrl}}/api/citas
+  url: {{agendaUrl}}/api/citas
   body: json
   auth: none
 }
@@ -21,6 +21,10 @@ body:json {
 }
 
 script:pre-request {
+  const sufijo = Date.now();
+  bru.setVar("pacienteConCita", "pac-hc-" + sufijo);
+  bru.setVar("medicoConCita", "med-hc-" + sufijo);
+  bru.setVar("medicoSinCita", "med-sin-cita-" + sufijo);
   // Manana a las 08:00, en hora local
   const p = n => String(n).padStart(2, "0");
   const d = new Date();
@@ -31,12 +35,8 @@ script:pre-request {
 }
 
 tests {
-  test("responde 201, o 409 si la cita ya se agendo en una ejecucion anterior", function () {
-    expect([201, 409]).to.include(res.getStatus());
+  test("crea una cita nueva", function () {
+    expect(res.getStatus()).to.equal(201);
   });
-}
-
-docs {
-  Un medico solo ve la historia de pacientes con los que tiene cita (HU-06), y Historia clinica
-  le pregunta a Agenda. med-2 nunca recibe cita con pac-1, por eso es el "medico sin cita".
+  bru.setVar("citaHistoriaId", res.getBody().id);
 }

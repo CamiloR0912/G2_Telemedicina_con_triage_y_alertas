@@ -1,67 +1,73 @@
-# Pruebas de la API con Bruno
+# Pruebas de los microservicios con Bruno
 
-Colección de [Bruno](https://www.usebruno.com/) con los 14 endpoints de la API (Agenda, Historia
-clínica, Triage y alertas), incluidos los casos de error: 48 peticiones y 89 tests.
+## Arranque con Docker
 
-## Cómo usarla
+Desde la raiz del repositorio:
 
-1. Arranca la API desde `telemedicina/`: `mvn spring-boot:run` (o `./mvnw spring-boot:run`).
-   Escucha en `http://localhost:8080`.
-2. En Bruno: **Open Collection** → selecciona esta carpeta `bruno/`.
-3. Elige el entorno **local** (arriba a la derecha).
-4. Ejecuta la colección o cada carpeta con **Run** (clic derecho → Run). Las peticiones de una carpeta
-   dependen de las anteriores (ids y fechas guardados con `bru.setVar`), así que se ejecutan en orden.
+```bash
+docker compose up -d --build --wait --wait-timeout 240
+docker compose ps
+```
 
-Desde la terminal (sin abrir Bruno):
+Docker compila los tres servicios con Maven y Java 25; no necesitas instalarlos en tu equipo.
+La primera compilacion descarga las imagenes y dependencias.
+
+| Servicio | Direccion local |
+|---|---|
+| Agenda HTTP | http://localhost:8081 |
+| Agenda gRPC | localhost:9090 |
+| Triage y alertas | http://localhost:8082 |
+| Historia clinica | http://localhost:8083 |
+| Kafka | localhost:9092 |
+| RabbitMQ AMQP | localhost:5672 |
+| RabbitMQ administracion | http://localhost:15672 |
+
+RabbitMQ usa `telemedicina` / `telemedicina-local` (credenciales de desarrollo).
+Dentro de Docker, los servicios se conectan usando los nombres de Compose.
+Kafka anuncia una direccion interna y otra para clientes del equipo anfitrion.
+Los healthchecks verifican los brokers y los puertos de los servicios; las pruebas Bruno
+validan que las operaciones y la comunicacion entre servicios realmente funcionen.
+
+Para detener: `docker compose down`. Las bases H2 y los brokers conservan sus datos en
+volumenes separados. `docker compose down -v` elimina TODOS esos datos de desarrollo.
+Las carpetas `data/` existentes fuera de Docker no se importan ni se modifican.
+No arranques simultaneamente servicios locales que ocupen los mismos puertos.
+
+## Ejecutar las pruebas
+
+En Bruno abre esta carpeta como coleccion, selecciona el entorno **local** y ejecuta
+**Run** sobre la coleccion o una carpeta completa. Respeta el orden `seq`: las peticiones
+comparten identificadores creados durante la ejecucion.
+
+Con Node.js y npm:
 
 ```bash
 cd bruno
-npx @usebruno/cli run --env local                    # toda la colección
-npx @usebruno/cli run agenda --env local             # una sola carpeta
+npx --yes @usebruno/cli run --env local
+npx --yes @usebruno/cli run agenda --env local
+npx --yes @usebruno/cli run historia-clinica --env local
+npx --yes @usebruno/cli run triage-alertas --env local
 ```
 
-## Datos de prueba
+El entorno separa `agendaUrl`, `triageUrl` e `historiaUrl`. Ajustalas si cambias los puertos.
+La coleccion corresponde a los microservicios, no a la aplicacion antigua `telemedicina/`.
 
-Los datos viven en memoria: se borran al reiniciar la API. Cada ejecución genera sus propios médicos,
-pacientes, consultas y citas de triage, así que la colección se puede correr varias veces seguidas.
+## Casos y precondiciones
 
-Historia clínica le pregunta a Agenda si el médico tiene cita con el paciente. Por eso la carpeta
-empieza agendando una cita entre `med-1` y `pac-1` (petición `00`).
+- Agenda: creacion, solapamientos, franja contigua, validaciones, consulta, agenda del dia,
+  reprogramacion y cancelacion. La cita contigua se cancela antes de continuar.
+  La agenda del dia usa `/api/medicos/{medicoId}/agenda?dia=...`.
+- Historia: genera medico y paciente nuevos, agenda su cita, registra la historia,
+  comprueba acceso y auditoria por gRPC, rechaza una consulta sin triage y completa
+  el triage de esa misma cita antes de probar consultas y sus errores.
+- Kafka: antes de registrar la consulta, se sondea Historia hasta 30 veces, con un segundo
+  entre intentos. El sondeo usa diagnostico vacio para no guardar consultas; espera el
+  cambio de 409 por triage pendiente a 400 por diagnostico obligatorio. Cualquier otro
+  error falla inmediatamente. Consultar triage en Triage no prueba que Historia recibio el evento.
+- Triage y alertas: clasificacion baja/media/alta, validaciones, consulta, panel y atencion.
+  Las pruebas de `notificada: true` necesitan RabbitMQ disponible.
 
-| Variable          | Valor   | Uso                                         |
-|-------------------|---------|---------------------------------------------|
-| `medicoConCita`   | `med-1` | Tiene cita con `pac-1` → acceso permitido    |
-| `medicoSinCita`   | `med-2` | Nunca recibe cita con `pac-1` → 403          |
-| `pacienteConCita` | `pac-1` | Paciente usado en historia clínica          |
-| `enfermeriaId`    | `enf-1` | Enfermera que atiende la alerta             |
-
-## Endpoints cubiertos
-
-**Agenda** (`agenda/`)
-
-| Método | Ruta                                   | Casos                                            |
-|--------|----------------------------------------|--------------------------------------------------|
-| POST   | `/api/citas`                           | 201; 409 médico/paciente ocupado; 400 pasado, franja invertida, sin especialidad; cupo liberado al cancelar/reprogramar |
-| GET    | `/api/citas/{id}`                      | 200, 404                                         |
-| GET    | `/api/citas?medicoId=&fecha=`          | agenda del día (HU-08), ordenada y sin canceladas |
-| GET    | `/api/citas/disponibilidad?medicoId=&pacienteId=&inicio=&fin=` | ocupada / libre en el borde |
-| POST   | `/api/citas/{id}/reprogramar`          | 200; 400 misma franja; 409 franja ocupada o cita cancelada |
-| POST   | `/api/citas/{id}/cancelar`             | 200; 409 ya cancelada                            |
-
-**Historia clínica** (`historia-clinica/`)
-
-| Método | Ruta                                             | Casos                                  |
-|--------|--------------------------------------------------|----------------------------------------|
-| POST   | `/api/historias-clinicas`                        | 201, 409 duplicada, 400 grupo inválido |
-| GET    | `/api/historias-clinicas/{pacienteId}`           | 200 + auditoría, 403, 404, 400 sin `X-Medico-Id` |
-| POST   | `/api/historias-clinicas/{pacienteId}/consultas` | 201, 409 duplicada, 400 sin diagnóstico, 403 |
-
-**Triage y alertas** (`triage-alertas/`)
-
-| Método | Ruta                               | Casos                                        |
-|--------|------------------------------------|----------------------------------------------|
-| POST   | `/api/triage`                      | bajo, medio, alto + alerta; 400 sin respuestas, intensidad > 10, síntoma repetido |
-| GET    | `/api/triage/{id}`                 | 200, 404                                     |
-| GET    | `/api/triage/completado?citaId=`   | `true` / `false`                             |
-| GET    | `/api/alertas/activas`             | contiene la alerta alta; sin la atendida     |
-| POST   | `/api/triage/{id}/alerta/atender`  | 200, 409 ya atendida, 409 sin alerta         |
+Los datos son persistentes. Cada corrida genera identificadores nuevos para evitar
+conflictos entre ejecuciones; los datos de prueba se acumulan en los volumenes.
+La coleccion no simula caidas de brokers ni comprueba por si sola la entrega a un consumidor
+externo de enfermeria.

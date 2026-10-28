@@ -1,0 +1,23 @@
+meta {
+  name: 08c Completar triage de la cita
+  type: http
+  seq: 10
+}
+post {
+  url: {{triageUrl}}/api/triage
+  body: json
+  auth: none
+}
+body:json {
+  {
+    "pacienteId": "{{pacienteConCita}}",
+    "citaId": "{{citaHistoriaId}}",
+    "respuestas": [{ "sintoma": "cansancio", "intensidad": 1 }]
+  }
+}
+tests {
+  test("publica el triage de la misma cita", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().citaId).to.equal(bru.getVar("citaHistoriaId"));
+  });
+}

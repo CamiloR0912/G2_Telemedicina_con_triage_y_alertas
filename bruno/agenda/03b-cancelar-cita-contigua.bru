@@ -1,0 +1,16 @@
+meta {
+  name: 03b Cancelar cita contigua de prueba
+  type: http
+  seq: 4
+}
+post {
+  url: {{agendaUrl}}/api/citas/{{citaContiguaId}}/cancelar
+  body: none
+  auth: none
+}
+tests {
+  test("libera la franja contigua", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().estado).to.equal("CANCELADA");
+  });
+}

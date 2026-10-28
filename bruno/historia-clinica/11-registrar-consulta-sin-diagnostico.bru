@@ -1,11 +1,11 @@
 meta {
   name: 11 Registrar consulta sin diagnostico (400)
   type: http
-  seq: 11
+  seq: 13
 }
 
 post {
-  url: {{baseUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
+  url: {{historiaUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
   body: json
   auth: none
 }
@@ -16,6 +16,7 @@ headers {
 
 body:json {
   {
+    "citaId": "{{citaHistoriaId}}",
     "consultaId": "cons-sin-diagnostico",
     "diagnostico": "  ",
     "notas": "",

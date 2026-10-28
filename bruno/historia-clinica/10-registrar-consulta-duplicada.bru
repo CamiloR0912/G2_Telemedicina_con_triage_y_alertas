@@ -1,11 +1,11 @@
 meta {
   name: 10 Registrar la misma consulta otra vez (409)
   type: http
-  seq: 10
+  seq: 12
 }
 
 post {
-  url: {{baseUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
+  url: {{historiaUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
   body: json
   auth: none
 }
@@ -16,6 +16,7 @@ headers {
 
 body:json {
   {
+    "citaId": "{{citaHistoriaId}}",
     "consultaId": "{{consultaId}}",
     "diagnostico": "Otro diagnostico",
     "notas": "",

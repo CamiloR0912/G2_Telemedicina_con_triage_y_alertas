@@ -1,28 +1,31 @@
 meta {
-  name: 02 Disponibilidad de una franja ocupada
+  name: 02 Franja solapada no disponible (409)
   type: http
   seq: 2
 }
 
-get {
-  url: {{baseUrl}}/api/citas/disponibilidad?medicoId={{medicoAgenda}}&pacienteId={{pacienteAgenda2}}&inicio={{t0915}}&fin={{t0945}}
-  body: none
+post {
+  url: {{agendaUrl}}/api/citas
+  body: json
   auth: none
 }
 
-params:query {
-  medicoId: {{medicoAgenda}}
-  pacienteId: {{pacienteAgenda2}}
-  inicio: {{t0915}}
-  fin: {{t0945}}
+body:json {
+  {
+    "pacienteId": "{{pacienteAgenda2}}",
+    "medicoId": "{{medicoAgenda}}",
+    "especialidad": "Medicina general",
+    "inicio": "{{t0915}}",
+    "fin": "{{t0945}}"
+  }
 }
 
 tests {
-  test("responde 200 OK", function () {
-    expect(res.getStatus()).to.equal(200);
+  test("responde 409 Conflict", function () {
+    expect(res.getStatus()).to.equal(409);
   });
 
-  test("09:15-09:45 se solapa con la cita de 09:00-09:30", function () {
-    expect(res.getBody().disponible).to.equal(false);
+  test("indica que el medico ya tiene cita", function () {
+    expect(res.getBody().detail).to.contain("El médico");
   });
 }

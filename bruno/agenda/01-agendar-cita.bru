@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{baseUrl}}/api/citas
+  url: {{agendaUrl}}/api/citas
   body: json
   auth: none
 }
@@ -61,7 +61,7 @@ tests {
     expect(body.inicio).to.equal(bru.getVar("t0900"));
     expect(body.fin).to.equal(bru.getVar("t0930"));
     expect(body.estado).to.equal("AGENDADA");
-    expect(body.activa).to.equal(true);
+    expect(body.prioritaria).to.equal(false);
   });
 
   bru.setVar("citaId", res.getBody().id);

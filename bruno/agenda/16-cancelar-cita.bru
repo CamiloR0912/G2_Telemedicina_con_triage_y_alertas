@@ -1,11 +1,11 @@
 meta {
   name: 16 Cancelar cita (HU-07)
   type: http
-  seq: 16
+  seq: 17
 }
 
 post {
-  url: {{baseUrl}}/api/citas/{{cita2Id}}/cancelar
+  url: {{agendaUrl}}/api/citas/{{cita2Id}}/cancelar
   body: none
   auth: none
 }
@@ -17,6 +17,5 @@ tests {
 
   test("la cita queda cancelada e inactiva", function () {
     expect(res.getBody().estado).to.equal("CANCELADA");
-    expect(res.getBody().activa).to.equal(false);
   });
 }

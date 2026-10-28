@@ -1,11 +1,11 @@
 meta {
   name: 12 Reprogramar cita (HU-07)
   type: http
-  seq: 12
+  seq: 13
 }
 
 post {
-  url: {{baseUrl}}/api/citas/{{citaId}}/reprogramar
+  url: {{agendaUrl}}/api/citas/{{citaId}}/reprogramar
   body: json
   auth: none
 }
@@ -27,6 +27,6 @@ tests {
     expect(body.inicio).to.equal(bru.getVar("t1100"));
     expect(body.fin).to.equal(bru.getVar("t1130"));
     expect(body.estado).to.equal("REPROGRAMADA");
-    expect(body.activa).to.equal(true);
+    expect(body.prioritaria).to.equal(false);
   });
 }

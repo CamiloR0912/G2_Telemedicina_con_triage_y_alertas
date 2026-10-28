@@ -1,18 +1,17 @@
 meta {
   name: 20 Agenda del dia sin citas canceladas y en orden
   type: http
-  seq: 20
+  seq: 21
 }
 
 get {
-  url: {{baseUrl}}/api/citas?medicoId={{medicoAgenda}}&fecha={{dia}}
+  url: {{agendaUrl}}/api/medicos/{{medicoAgenda}}/agenda?dia={{dia}}
   body: none
   auth: none
 }
 
 params:query {
-  medicoId: {{medicoAgenda}}
-  fecha: {{dia}}
+  dia: {{dia}}
 }
 
 tests {
