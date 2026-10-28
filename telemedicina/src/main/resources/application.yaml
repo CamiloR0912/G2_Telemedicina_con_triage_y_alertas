@@ -1,3 +1,15 @@
 spring:
   application:
     name: telemedicina
+  # Base de datos en memoria: se crea al arrancar y se borra al detener la aplicación.
+  datasource:
+    url: jdbc:h2:mem:telemedicina
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+# Citas simuladas médico:paciente mientras Agenda (Dev 1) no expone las suyas
+historia-clinica:
+  agenda-simulada:
+    citas: med-1:pac-1,med-2:pac-2
