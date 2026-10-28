@@ -1,0 +1,25 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: agenda-service
+  # Base de datos propia del servicio (Database per Service). En archivo para que sobreviva reinicios.
+  datasource:
+    url: jdbc:h2:file:./data/agenda
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  grpc:
+    server:
+      port: 9090
+  rabbitmq:
+    host: localhost
+    port: 5672
+    listener:
+      simple:
+        # Un mensaje que falla no vuelve a la cola: evita un bucle infinito de reintentos
+        default-requeue-rejected: false
