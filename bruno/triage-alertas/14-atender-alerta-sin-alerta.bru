@@ -1,0 +1,23 @@
+meta {
+  name: 14 Atender alerta de un triage sin alerta (409)
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/triage/{{cuestionarioBajoId}}/alerta/atender
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "enfermeriaId": "{{enfermeriaId}}"
+  }
+}
+
+tests {
+  test("responde 409 Conflict", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+}

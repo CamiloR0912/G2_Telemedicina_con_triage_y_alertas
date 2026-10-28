@@ -1,0 +1,26 @@
+meta {
+  name: 07 Buscar cuestionario por id
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/triage/{{cuestionarioBajoId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("devuelve el cuestionario guardado", function () {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("cuestionarioBajoId"));
+    expect(body.citaId).to.equal(bru.getVar("citaBaja"));
+    expect(body.nivelUrgencia).to.equal("bajo");
+    expect(body.fechaRespuesta).to.be.a("string");
+    expect(body.fechaClasificacion).to.be.a("string");
+  });
+}

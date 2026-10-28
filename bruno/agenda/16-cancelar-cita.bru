@@ -1,0 +1,22 @@
+meta {
+  name: 16 Cancelar cita (HU-07)
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/api/citas/{{cita2Id}}/cancelar
+  body: none
+  auth: none
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("la cita queda cancelada e inactiva", function () {
+    expect(res.getBody().estado).to.equal("CANCELADA");
+    expect(res.getBody().activa).to.equal(false);
+  });
+}

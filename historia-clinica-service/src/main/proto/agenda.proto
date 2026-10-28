@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_package = "com.telemedicina.historiaclinicaservice.grpc";
+option java_multiple_files = true;
+
+// Copia del contrato de agenda-service (dev-1): solo cambia java_package. Cada servicio genera sus propias clases.
+service AgendaGrpc {
+  rpc ExisteCitaEntre (CitaEntreRequest) returns (CitaEntreResponse) {}
+}
+
+message CitaEntreRequest {
+  string medicoId = 1;
+  string pacienteId = 2;
+}
+
+message CitaEntreResponse {
+  bool existe = 1;
+}

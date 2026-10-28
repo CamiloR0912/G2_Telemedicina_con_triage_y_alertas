@@ -1,0 +1,29 @@
+meta {
+  name: 04 Responder triage sin respuestas (400)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/triage
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "pac-1",
+    "citaId": "cita-sin-respuestas",
+    "respuestas": []
+  }
+}
+
+tests {
+  test("responde 400 Bad Request", function () {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("indica que necesita al menos una respuesta", function () {
+    expect(res.getBody().detail).to.contain("al menos una respuesta");
+  });
+}

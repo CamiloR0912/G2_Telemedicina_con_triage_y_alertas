@@ -1,0 +1,30 @@
+meta {
+  name: 12 Registrar consulta con medico sin cita (403)
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
+  body: json
+  auth: none
+}
+
+headers {
+  X-Medico-Id: {{medicoSinCita}}
+}
+
+body:json {
+  {
+    "consultaId": "cons-no-autorizada",
+    "diagnostico": "No deberia guardarse",
+    "notas": "",
+    "recetaSimplificada": ""
+  }
+}
+
+tests {
+  test("responde 403 Forbidden", function () {
+    expect(res.getStatus()).to.equal(403);
+  });
+}

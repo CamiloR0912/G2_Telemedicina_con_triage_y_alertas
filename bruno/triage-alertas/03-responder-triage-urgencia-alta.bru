@@ -1,0 +1,48 @@
+meta {
+  name: 03 Responder triage con urgencia alta genera alerta (HU-03, HU-04)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/triage
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "pac-alto",
+    "citaId": "{{citaAlta}}",
+    "respuestas": [
+      { "sintoma": "Dolor de pecho", "intensidad": 7 },
+      { "sintoma": "fiebre", "intensidad": 2 }
+    ]
+  }
+}
+
+tests {
+  test("responde 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("sintoma de alarma clasifica como alto", function () {
+    expect(res.getBody().nivelUrgencia).to.equal("alto");
+  });
+
+  test("normaliza el sintoma a minusculas", function () {
+    expect(res.getBody().respuestas[0].sintoma).to.equal("dolor de pecho");
+  });
+
+  test("genera una alerta activa y notificada a enfermeria", function () {
+    const alerta = res.getBody().alerta;
+    expect(alerta).to.be.an("object");
+    expect(alerta.id).to.be.a("string").and.not.empty;
+    expect(alerta.nivelUrgencia).to.equal("alto");
+    expect(alerta.activa).to.equal(true);
+    expect(alerta.notificada).to.equal(true);
+    expect(alerta.atendidaPor).to.equal(null);
+  });
+
+  bru.setVar("cuestionarioAltoId", res.getBody().id);
+}

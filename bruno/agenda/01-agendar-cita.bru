@@ -1,0 +1,72 @@
+meta {
+  name: 01 Agendar cita (HU-02)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/citas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteAgenda}}",
+    "medicoId": "{{medicoAgenda}}",
+    "especialidad": "Medicina general",
+    "inicio": "{{t0900}}",
+    "fin": "{{t0930}}"
+  }
+}
+
+script:pre-request {
+  // Medico y pacientes unicos por ejecucion: la carpeta se puede correr muchas veces sin reiniciar la API.
+  const sufijo = Date.now();
+  bru.setVar("medicoAgenda", "med-agenda-" + sufijo);
+  bru.setVar("medicoAgenda2", "med-agenda2-" + sufijo);
+  bru.setVar("pacienteAgenda", "pac-agenda-" + sufijo);
+  bru.setVar("pacienteAgenda2", "pac-agenda2-" + sufijo);
+  bru.setVar("pacienteAgenda3", "pac-agenda3-" + sufijo);
+
+  // Fechas en hora local, sin zona: el formato que espera LocalDateTime.
+  const p = n => String(n).padStart(2, "0");
+  function fecha(dias, hora, minuto) {
+    const d = new Date();
+    d.setDate(d.getDate() + dias);
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(hora)}:${p(minuto)}:00`;
+  }
+  bru.setVar("dia", fecha(2, 0, 0).slice(0, 10));
+  bru.setVar("t0900", fecha(2, 9, 0));
+  bru.setVar("t0915", fecha(2, 9, 15));
+  bru.setVar("t0930", fecha(2, 9, 30));
+  bru.setVar("t0945", fecha(2, 9, 45));
+  bru.setVar("t1000", fecha(2, 10, 0));
+  bru.setVar("t1100", fecha(2, 11, 0));
+  bru.setVar("t1130", fecha(2, 11, 30));
+  bru.setVar("ayer0900", fecha(-1, 9, 0));
+  bru.setVar("ayer0930", fecha(-1, 9, 30));
+}
+
+tests {
+  test("responde 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("la cita queda agendada y activa", function () {
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").and.not.empty;
+    expect(body.pacienteId).to.equal(bru.getVar("pacienteAgenda"));
+    expect(body.medicoId).to.equal(bru.getVar("medicoAgenda"));
+    expect(body.inicio).to.equal(bru.getVar("t0900"));
+    expect(body.fin).to.equal(bru.getVar("t0930"));
+    expect(body.estado).to.equal("AGENDADA");
+    expect(body.activa).to.equal(true);
+  });
+
+  bru.setVar("citaId", res.getBody().id);
+}
+
+docs {
+  Genera medico, pacientes y fechas (pasado manana) para toda la carpeta; ejecutala en orden.
+}

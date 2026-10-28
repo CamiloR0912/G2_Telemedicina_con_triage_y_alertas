@@ -1,0 +1,31 @@
+meta {
+  name: 04 Agendar con medico ocupado en esa franja (409)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/citas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteAgenda2}}",
+    "medicoId": "{{medicoAgenda}}",
+    "especialidad": "Medicina general",
+    "inicio": "{{t0915}}",
+    "fin": "{{t0945}}"
+  }
+}
+
+tests {
+  test("responde 409 Conflict", function () {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("indica que el medico ya tiene cita", function () {
+    expect(res.getBody().detail).to.contain("El médico");
+  });
+}

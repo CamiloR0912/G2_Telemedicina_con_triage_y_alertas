@@ -1,0 +1,38 @@
+meta {
+  name: 02 Registrar historia de un paciente nuevo
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/historias-clinicas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteNuevo}}",
+    "grupoSanguineo": "AB-",
+    "alergias": [],
+    "antecedentes": "Ninguno"
+  }
+}
+
+script:pre-request {
+  bru.setVar("pacienteNuevo", "pac-bruno-" + Date.now());
+}
+
+tests {
+  test("responde 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("devuelve la historia registrada", function () {
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").and.not.empty;
+    expect(body.pacienteId).to.equal(bru.getVar("pacienteNuevo"));
+    expect(body.grupoSanguineo).to.equal("AB-");
+    expect(body.antecedentes).to.equal("Ninguno");
+  });
+}

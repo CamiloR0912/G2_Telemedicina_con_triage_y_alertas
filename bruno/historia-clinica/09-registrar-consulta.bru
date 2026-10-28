@@ -1,0 +1,43 @@
+meta {
+  name: 09 Registrar consulta (HU-05)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/historias-clinicas/{{pacienteConCita}}/consultas
+  body: json
+  auth: none
+}
+
+headers {
+  X-Medico-Id: {{medicoConCita}}
+}
+
+body:json {
+  {
+    "consultaId": "{{consultaId}}",
+    "diagnostico": "Faringitis aguda",
+    "notas": "Reposo y abundante liquido",
+    "recetaSimplificada": "Acetaminofen 500 mg cada 8 horas por 3 dias"
+  }
+}
+
+script:pre-request {
+  bru.setVar("consultaId", "cons-bruno-" + Date.now());
+}
+
+tests {
+  test("responde 201 Created", function () {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("devuelve el registro clinico con medico y fecha", function () {
+    const body = res.getBody();
+    expect(body.consultaId).to.equal(bru.getVar("consultaId"));
+    expect(body.medicoId).to.equal("med-1");
+    expect(body.diagnostico).to.equal("Faringitis aguda");
+    expect(body.recetaSimplificada).to.contain("Acetaminofen");
+    expect(body.fechaRegistro).to.be.a("string");
+  });
+}

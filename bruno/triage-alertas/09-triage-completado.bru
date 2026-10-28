@@ -1,0 +1,30 @@
+meta {
+  name: 09 Triage completado para una cita con triage
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/triage/completado?citaId={{citaBaja}}
+  body: none
+  auth: none
+}
+
+params:query {
+  citaId: {{citaBaja}}
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("la cita tiene el triage completado", function () {
+    expect(res.getBody().citaId).to.equal(bru.getVar("citaBaja"));
+    expect(res.getBody().completado).to.equal(true);
+  });
+}
+
+docs {
+  Regla de negocio: no puede iniciarse una consulta sin un triage completado.
+}

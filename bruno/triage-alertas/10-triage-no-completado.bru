@@ -1,0 +1,25 @@
+meta {
+  name: 10 Triage no completado para una cita sin triage
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/triage/completado?citaId=cita-sin-triage
+  body: none
+  auth: none
+}
+
+params:query {
+  citaId: cita-sin-triage
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("la cita no tiene triage completado", function () {
+    expect(res.getBody().completado).to.equal(false);
+  });
+}
