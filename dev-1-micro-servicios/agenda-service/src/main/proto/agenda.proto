@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_package = "com.telemedicina.agendaservice.grpc";
+option java_multiple_files = true;
+
+// Contrato que Agenda ofrece a Historia clínica (HU-06): solo responde si hay cita, nunca entrega la Cita.
+service AgendaGrpc {
+  rpc ExisteCitaEntre (CitaEntreRequest) returns (CitaEntreResponse) {}
+}
+
+message CitaEntreRequest {
+  string medicoId = 1;
+  string pacienteId = 2;
+}
+
+message CitaEntreResponse {
+  bool existe = 1;
+}
