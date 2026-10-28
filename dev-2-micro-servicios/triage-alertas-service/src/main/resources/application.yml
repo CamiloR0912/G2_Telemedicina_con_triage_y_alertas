@@ -1,0 +1,26 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: triage-alertas-service
+  # Base de datos propia del servicio (Database per Service). En archivo: la tabla outbox debe
+  # sobrevivir a un reinicio, si no el patrón no garantiza nada.
+  datasource:
+    url: jdbc:h2:file:./data/triage-alertas
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      properties:
+        # Con Kafka caído, send() no bloquea el poller 60 s (valor por defecto) esperando metadatos
+        max.block.ms: 5000
+  rabbitmq:
+    host: localhost
+    port: 5672
+    connection-timeout: 3s
