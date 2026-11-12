@@ -23,3 +23,21 @@ spring:
       simple:
         # Un mensaje que falla no vuelve a la cola: evita un bucle infinito de reintentos
         default-requeue-rejected: false
+  # Saga de cancelación: publica citas.en-cancelacion (outbox) y escucha la respuesta de Triage
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: agenda-service
+      auto-offset-reset: earliest
+    producer:
+      properties:
+        # Con Kafka caído, send() no bloquea el poller 60 s (valor por defecto) esperando metadatos
+        max.block.ms: 5000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    # Se registra con su IP y no con el nombre del equipo, que el Gateway a veces no puede resolver
+    prefer-ip-address: true

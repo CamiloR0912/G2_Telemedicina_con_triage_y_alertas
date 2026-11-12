@@ -44,6 +44,9 @@ class CitaEntity {
 	@Column(nullable = false)
 	private EstadoCita estado;
 
+	@Enumerated(EnumType.STRING)
+	private EstadoCita estadoPrevio;
+
 	@Column(nullable = false)
 	private boolean prioritaria;
 
@@ -59,12 +62,13 @@ class CitaEntity {
 		entidad.inicio = cita.getFranja().inicio();
 		entidad.fin = cita.getFranja().fin();
 		entidad.estado = cita.getEstado();
+		entidad.estadoPrevio = cita.getEstadoPrevio();
 		entidad.prioritaria = cita.isPrioritaria();
 		return entidad;
 	}
 
 	Cita aDominio() {
 		return Cita.reconstituir(id, pacienteId, medicoId, especialidad, new FranjaHoraria(inicio, fin), estado,
-				prioritaria);
+				estadoPrevio, prioritaria);
 	}
 }

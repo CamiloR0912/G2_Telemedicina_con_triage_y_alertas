@@ -16,6 +16,10 @@ spring:
     open-in-view: false
   kafka:
     bootstrap-servers: localhost:9092
+    # Saga de cancelación: escucha citas.en-cancelacion que publica Agenda
+    consumer:
+      group-id: triage-alertas-service
+      auto-offset-reset: earliest
     producer:
       properties:
         # Con Kafka caído, send() no bloquea el poller 60 s (valor por defecto) esperando metadatos
@@ -24,3 +28,11 @@ spring:
     host: localhost
     port: 5672
     connection-timeout: 3s
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    # Se registra con su IP y no con el nombre del equipo, que el Gateway a veces no puede resolver
+    prefer-ip-address: true

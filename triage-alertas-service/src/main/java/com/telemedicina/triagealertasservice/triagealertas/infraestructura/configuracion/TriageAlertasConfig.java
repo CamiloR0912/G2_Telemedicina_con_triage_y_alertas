@@ -5,9 +5,11 @@ import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.telemedicina.triagealertasservice.triagealertas.aplicacion.CancelacionCitaService;
 import com.telemedicina.triagealertasservice.triagealertas.aplicacion.CuestionarioTriageService;
 import com.telemedicina.triagealertasservice.triagealertas.aplicacion.NotificadorEnfermeria;
 import com.telemedicina.triagealertasservice.triagealertas.aplicacion.PublicadorEventosTriage;
+import com.telemedicina.triagealertasservice.triagealertas.aplicacion.PublicadorRespuestaCancelacion;
 import com.telemedicina.triagealertasservice.triagealertas.aplicacion.RepositorioCuestionariosTriage;
 import com.telemedicina.triagealertasservice.triagealertas.dominio.ClasificacionTriageService;
 import com.telemedicina.triagealertasservice.triagealertas.dominio.CuestionarioTriageFactory;
@@ -41,5 +43,11 @@ public class TriageAlertasConfig {
                                                         ClasificacionTriageService clasificacionTriageService) {
         return new CuestionarioTriageService(repositorioCuestionarios, notificadorEnfermeria, publicadorEventos,
                 cuestionarioTriageFactory, clasificacionTriageService, RELOJ);
+    }
+
+    @Bean
+    CancelacionCitaService cancelacionCitaService(RepositorioCuestionariosTriage repositorioCuestionarios,
+                                                  PublicadorRespuestaCancelacion publicador) {
+        return new CancelacionCitaService(repositorioCuestionarios, publicador);
     }
 }

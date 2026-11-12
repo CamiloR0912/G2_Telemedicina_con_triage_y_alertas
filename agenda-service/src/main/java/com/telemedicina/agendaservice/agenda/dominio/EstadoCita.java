@@ -6,6 +6,8 @@ package com.telemedicina.agendaservice.agenda.dominio;
 public enum EstadoCita {
 	AGENDADA,
 	REPROGRAMADA,
+	/** Saga de cancelación en curso: espera la respuesta de Triage y sigue ocupando su cupo. */
+	EN_CANCELACION,
 	CANCELADA;
 
 	/** Una cita activa ocupa su cupo; una cancelada lo libera para otro paciente. */

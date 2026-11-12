@@ -21,20 +21,23 @@ public class Cita {
 	private final String especialidad;
 	private FranjaHoraria franja;
 	private EstadoCita estado;
+	/** Estado al que vuelve la cita si la Saga de cancelación se compensa. Solo existe durante EN_CANCELACION. */
+	private EstadoCita estadoPrevio;
 	private boolean prioritaria;
 
 	Cita(UUID id, String pacienteId, String medicoId, String especialidad, FranjaHoraria franja) {
-		this(id, pacienteId, medicoId, especialidad, franja, EstadoCita.AGENDADA, false);
+		this(id, pacienteId, medicoId, especialidad, franja, EstadoCita.AGENDADA, null, false);
 	}
 
 	private Cita(UUID id, String pacienteId, String medicoId, String especialidad, FranjaHoraria franja,
-			EstadoCita estado, boolean prioritaria) {
+			EstadoCita estado, EstadoCita estadoPrevio, boolean prioritaria) {
 		this.id = id;
 		this.pacienteId = pacienteId;
 		this.medicoId = medicoId;
 		this.especialidad = especialidad;
 		this.franja = franja;
 		this.estado = estado;
+		this.estadoPrevio = estadoPrevio;
 		this.prioritaria = prioritaria;
 	}
 
@@ -44,11 +47,11 @@ public class Cita {
 	 * nueva se sigue creando solo con {@link CitaFactory#agendar}.
 	 */
 	public static Cita reconstituir(UUID id, String pacienteId, String medicoId, String especialidad,
-			FranjaHoraria franja, EstadoCita estado, boolean prioritaria) {
+			FranjaHoraria franja, EstadoCita estado, EstadoCita estadoPrevio, boolean prioritaria) {
 		Objects.requireNonNull(id, "El id de la cita es obligatorio");
 		Objects.requireNonNull(franja, "La franja horaria es obligatoria");
 		Objects.requireNonNull(estado, "El estado de la cita es obligatorio");
-		return new Cita(id, pacienteId, medicoId, especialidad, franja, estado, prioritaria);
+		return new Cita(id, pacienteId, medicoId, especialidad, franja, estado, estadoPrevio, prioritaria);
 	}
 
 	/**
@@ -62,12 +65,39 @@ public class Cita {
 		this.prioritaria = true;
 	}
 
-	/** HU-07: al cancelar, la cita deja de estar activa y su cupo queda libre. */
-	public void cancelar() {
+	/**
+	 * HU-07 · paso 1 de la Saga de cancelación: la cita queda EN_CANCELACION, todavía ocupando su
+	 * cupo, hasta que Triage confirme o rechace. Se recuerda el estado actual por si hay que compensar.
+	 */
+	public void iniciarCancelacion() {
 		if (!estaActiva()) {
 			throw new IllegalStateException("La cita " + id + " ya está cancelada");
 		}
+		if (estado == EstadoCita.EN_CANCELACION) {
+			throw new IllegalStateException("La cita " + id + " ya está en proceso de cancelación");
+		}
+		this.estadoPrevio = estado;
+		this.estado = EstadoCita.EN_CANCELACION;
+	}
+
+	/** Saga · Triage confirmó: la cita deja de estar activa y su cupo queda libre. */
+	public void confirmarCancelacion() {
+		exigirEnCancelacion();
 		this.estado = EstadoCita.CANCELADA;
+		this.estadoPrevio = null;
+	}
+
+	/** Saga · compensación: Triage rechazó la cancelación y la cita vuelve a su estado anterior. */
+	public void compensarCancelacion() {
+		exigirEnCancelacion();
+		this.estado = estadoPrevio;
+		this.estadoPrevio = null;
+	}
+
+	private void exigirEnCancelacion() {
+		if (estado != EstadoCita.EN_CANCELACION) {
+			throw new IllegalStateException("La cita " + id + " no tiene una cancelación en curso");
+		}
 	}
 
 	/**
@@ -79,6 +109,9 @@ public class Cita {
 		Objects.requireNonNull(nuevaFranja, "La nueva franja horaria es obligatoria");
 		if (!estaActiva()) {
 			throw new IllegalStateException("No se puede reprogramar una cita cancelada");
+		}
+		if (estado == EstadoCita.EN_CANCELACION) {
+			throw new IllegalStateException("No se puede reprogramar una cita en proceso de cancelación");
 		}
 		if (nuevaFranja.equals(franja)) {
 			throw new IllegalArgumentException("La nueva franja horaria es igual a la actual");
@@ -118,6 +151,10 @@ public class Cita {
 
 	public EstadoCita getEstado() {
 		return estado;
+	}
+
+	public EstadoCita getEstadoPrevio() {
+		return estadoPrevio;
 	}
 
 	public boolean isPrioritaria() {

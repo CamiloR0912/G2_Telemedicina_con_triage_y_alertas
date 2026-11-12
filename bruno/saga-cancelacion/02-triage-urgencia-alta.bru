@@ -1,0 +1,30 @@
+meta {
+  name: 02 El paciente responde triage con urgencia alta (alerta pendiente)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{triageUrl}}/api/triage
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteSaga}}",
+    "citaId": "{{citaSagaId}}",
+    "respuestas": [
+      { "sintoma": "Dificultad para respirar", "intensidad": 8 }
+    ]
+  }
+}
+
+tests {
+  test("genera una alerta clinica activa", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().nivelUrgencia).to.equal("alto");
+    expect(res.getBody().alerta.activa).to.equal(true);
+  });
+  bru.setVar("cuestionarioSagaId", res.getBody().id);
+}

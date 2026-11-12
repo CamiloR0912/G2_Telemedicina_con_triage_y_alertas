@@ -45,8 +45,9 @@ public class CitaController {
 		return CitaMapper.aResponse(citaUseCase.buscarPorId(id));
 	}
 
-	/** HU-07 */
+	/** HU-07 · 202 y no 200: la Saga de cancelación termina después, cuando Triage responde. */
 	@PostMapping("/citas/{id}/cancelar")
+	@ResponseStatus(HttpStatus.ACCEPTED)
 	public CitaResponse cancelar(@PathVariable UUID id) {
 		return CitaMapper.aResponse(citaUseCase.cancelar(id));
 	}

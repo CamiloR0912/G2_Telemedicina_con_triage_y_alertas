@@ -1,0 +1,24 @@
+meta {
+  name: 04 Enfermeria atiende la alerta
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{triageUrl}}/api/triage/{{cuestionarioSagaId}}/alerta/atender
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "enfermeriaId": "{{enfermeriaId}}"
+  }
+}
+
+tests {
+  test("la alerta queda atendida", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().alerta.activa).to.equal(false);
+  });
+}

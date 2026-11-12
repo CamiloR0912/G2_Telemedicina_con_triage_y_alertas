@@ -1,0 +1,16 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  client:
+    # Es el registro, no un cliente: no se registra ni se consulta a sí mismo
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    # Desarrollo: refresca la caché de respuestas cada 5 s (por defecto 30 s) para que un servicio
+    # recién arrancado sea visible para el Gateway casi de inmediato
+    response-cache-update-interval-ms: 5000

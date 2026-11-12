@@ -1,0 +1,42 @@
+meta {
+  name: 01 Agendar cita para la Saga (precondicion)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{agendaUrl}}/api/citas
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "pacienteId": "{{pacienteSaga}}",
+    "medicoId": "{{medicoSaga}}",
+    "especialidad": "Medicina general",
+    "inicio": "{{citaSagaInicio}}",
+    "fin": "{{citaSagaFin}}"
+  }
+}
+
+script:pre-request {
+  const sufijo = Date.now();
+  bru.setVar("pacienteSaga", "pac-saga-" + sufijo);
+  bru.setVar("medicoSaga", "med-saga-" + sufijo);
+  // Manana a las 07:00, en hora local
+  const p = n => String(n).padStart(2, "0");
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const dia = d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+  bru.setVar("citaSagaInicio", dia + "T07:00:00");
+  bru.setVar("citaSagaFin", dia + "T07:30:00");
+}
+
+tests {
+  test("crea una cita AGENDADA", function () {
+    expect(res.getStatus()).to.equal(201);
+    expect(res.getBody().estado).to.equal("AGENDADA");
+  });
+  bru.setVar("citaSagaId", res.getBody().id);
+}

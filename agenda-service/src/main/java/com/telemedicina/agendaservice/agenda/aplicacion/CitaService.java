@@ -14,6 +14,8 @@ import com.telemedicina.agendaservice.agenda.dominio.CitaNoEncontradaException;
 import com.telemedicina.agendaservice.agenda.dominio.DisponibilidadService;
 import com.telemedicina.agendaservice.agenda.dominio.FranjaHoraria;
 
+import jakarta.transaction.Transactional;
+
 /**
  * Caso de uso: orquesta el dominio (Factory, Servicio de Dominio, Cita) y el
  * puerto secundario. Las reglas viven en el dominio; aquí solo se coordinan.
@@ -24,12 +26,14 @@ public class CitaService implements CitaUseCase {
 	private final RepositorioCitas repositorioCitas;
 	private final CitaFactory citaFactory;
 	private final DisponibilidadService disponibilidadService;
+	private final PublicadorEventosAgenda publicadorEventos;
 
 	public CitaService(RepositorioCitas repositorioCitas, CitaFactory citaFactory,
-			DisponibilidadService disponibilidadService) {
+			DisponibilidadService disponibilidadService, PublicadorEventosAgenda publicadorEventos) {
 		this.repositorioCitas = repositorioCitas;
 		this.citaFactory = citaFactory;
 		this.disponibilidadService = disponibilidadService;
+		this.publicadorEventos = publicadorEventos;
 	}
 
 	@Override
@@ -48,9 +52,27 @@ public class CitaService implements CitaUseCase {
 	}
 
 	@Override
+	@Transactional
 	public Cita cancelar(UUID id) {
 		var cita = buscarPorId(id);
-		cita.cancelar();
+		cita.iniciarCancelacion();
+		var guardada = repositorioCitas.guardar(cita);
+		// Transactional Outbox: el cambio de estado y el evento se confirman juntos, o ninguno.
+		publicadorEventos.citaEnCancelacion(guardada);
+		return guardada;
+	}
+
+	@Override
+	public Cita confirmarCancelacion(UUID id) {
+		var cita = buscarPorId(id);
+		cita.confirmarCancelacion();
+		return repositorioCitas.guardar(cita);
+	}
+
+	@Override
+	public Cita compensarCancelacion(UUID id) {
+		var cita = buscarPorId(id);
+		cita.compensarCancelacion();
 		return repositorioCitas.guardar(cita);
 	}
 

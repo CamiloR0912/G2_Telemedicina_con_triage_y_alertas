@@ -3,14 +3,36 @@ meta {
   type: http
   seq: 4
 }
+
 post {
   url: {{agendaUrl}}/api/citas/{{citaContiguaId}}/cancelar
   body: none
   auth: none
 }
+
+script:post-response {
+  // La Saga es asincrona (Kafka): se consulta la cita hasta que Triage responda.
+  let estado = res.getBody().estado;
+  for (let intento = 0; intento < 30 && estado === "EN_CANCELACION"; intento++) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const respuesta = await bru.sendRequest({
+        method: "GET",
+        url: bru.getEnvVar("agendaUrl") + "/api/citas/" + bru.getVar("citaContiguaId"),
+        timeout: 5000,
+        validateStatus: null
+    });
+    estado = respuesta.data.estado;
+  }
+  bru.setVar("estadoTrasSaga", estado);
+}
+
 tests {
-  test("libera la franja contigua", function () {
-    expect(res.getStatus()).to.equal(200);
-    expect(res.getBody().estado).to.equal("CANCELADA");
+  test("inicia la Saga: 202 Accepted y EN_CANCELACION", function () {
+    expect(res.getStatus()).to.equal(202);
+    expect(res.getBody().estado).to.equal("EN_CANCELACION");
+  });
+
+  test("Triage confirma y libera la franja contigua", function () {
+    expect(bru.getVar("estadoTrasSaga")).to.equal("CANCELADA");
   });
 }

@@ -18,8 +18,17 @@ public interface CitaUseCase {
 
 	Cita buscarPorId(UUID id);
 
-	/** HU-07: cancela la cita y libera su cupo. */
+	/**
+	 * HU-07 · inicia la Saga de cancelación: la cita queda EN_CANCELACION y se avisa a Triage.
+	 * El cupo se libera recién cuando Triage confirma ({@link #confirmarCancelacion}).
+	 */
 	Cita cancelar(UUID id);
+
+	/** Saga · Triage no encontró alertas urgentes pendientes: la cita se cancela y libera su cupo. */
+	Cita confirmarCancelacion(UUID id);
+
+	/** Saga · compensación: Triage rechazó la cancelación y la cita vuelve a su estado anterior. */
+	Cita compensarCancelacion(UUID id);
 
 	/** HU-07: mueve la cita a otra franja libre. */
 	Cita reprogramar(UUID id, LocalDateTime inicio, LocalDateTime fin);

@@ -1,0 +1,35 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      # En esta versión de Spring Cloud las rutas van bajo server.webflux; con spring.cloud.gateway.routes
+      # el Gateway arranca sin rutas y todo responde 404.
+      server:
+        webflux:
+          routes:
+            # lb:// = busca el nombre en Eureka y balancea entre sus instancias
+            - id: agenda-route
+              uri: lb://agenda-service
+              predicates:
+                - Path=/api/citas/**,/api/medicos/**
+            - id: triage-alertas-route
+              uri: lb://triage-alertas-service
+              predicates:
+                - Path=/api/triage/**,/api/alertas/**
+            - id: historia-clinica-route
+              uri: lb://historia-clinica-service
+              predicates:
+                - Path=/api/historias-clinicas/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    # Desarrollo: consulta el registro cada 5 s (por defecto 30 s)
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true

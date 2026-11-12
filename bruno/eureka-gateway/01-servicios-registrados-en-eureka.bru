@@ -1,0 +1,27 @@
+meta {
+  name: 01 Eureka tiene registrados los servicios y el Gateway
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{eurekaUrl}}/eureka/apps
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("responde 200 OK", function () {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("los cuatro clientes estan registrados y UP", function () {
+    const apps = res.getBody().applications.application;
+    const up = apps.filter(a => a.instance.some(i => i.status === "UP")).map(a => a.name);
+    expect(up).to.include.members(["AGENDA-SERVICE", "TRIAGE-ALERTAS-SERVICE", "HISTORIA-CLINICA-SERVICE", "GATEWAY"]);
+  });
+}

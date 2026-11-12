@@ -66,7 +66,8 @@ class DisponibilidadServiceTest {
 	@Test
 	void citaCanceladaLiberaElCupo() {
 		var cancelada = cita("pac-1", "med-1", 0, 30);
-		cancelada.cancelar();
+		cancelada.iniciarCancelacion();
+		cancelada.confirmarCancelacion();
 
 		assertTrue(servicio.estaDisponible("med-1", "pac-2", franja(0, 30), List.of(cancelada)));
 	}
@@ -103,7 +104,8 @@ class DisponibilidadServiceTest {
 	@Test
 	void noReprogramaUnaCitaCancelada() {
 		var cita = cita("pac-1", "med-1", 0, 30);
-		cita.cancelar();
+		cita.iniciarCancelacion();
+		cita.confirmarCancelacion();
 
 		assertThrows(IllegalStateException.class,
 				() -> servicio.reprogramar(cita, franja(30, 60), List.of(cita)));
@@ -112,9 +114,10 @@ class DisponibilidadServiceTest {
 	@Test
 	void noSeCancelaDosVeces() {
 		var cita = cita("pac-1", "med-1", 0, 30);
-		cita.cancelar();
+		cita.iniciarCancelacion();
+		cita.confirmarCancelacion();
 
 		assertFalse(cita.estaActiva());
-		assertThrows(IllegalStateException.class, cita::cancelar);
+		assertThrows(IllegalStateException.class, cita::iniciarCancelacion);
 	}
 }

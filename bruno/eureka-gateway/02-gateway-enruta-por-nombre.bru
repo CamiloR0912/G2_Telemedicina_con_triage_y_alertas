@@ -1,0 +1,22 @@
+meta {
+  name: 02 El Gateway enruta a Triage por su nombre en Eureka
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{triageUrl}}/api/alertas/activas
+  body: none
+  auth: none
+}
+
+tests {
+  test("la peticion entra por el puerto 8000", function () {
+    expect(bru.getEnvVar("triageUrl")).to.contain(":8000");
+  });
+
+  test("y la responde triage-alertas-service (lb://)", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody()).to.be.an("array");
+  });
+}

@@ -1,0 +1,38 @@
+meta {
+  name: 03 Cancelar con alerta pendiente: Triage rechaza y Agenda compensa
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{agendaUrl}}/api/citas/{{citaSagaId}}/cancelar
+  body: none
+  auth: none
+}
+
+script:post-response {
+  // La Saga es asincrona (Kafka): se consulta la cita hasta que Triage responda.
+  let estado = res.getBody().estado;
+  for (let intento = 0; intento < 30 && estado === "EN_CANCELACION"; intento++) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const respuesta = await bru.sendRequest({
+        method: "GET",
+        url: bru.getEnvVar("agendaUrl") + "/api/citas/" + bru.getVar("citaSagaId"),
+        timeout: 5000,
+        validateStatus: null
+    });
+    estado = respuesta.data.estado;
+  }
+  bru.setVar("estadoTrasSaga", estado);
+}
+
+tests {
+  test("inicia la Saga: 202 Accepted y EN_CANCELACION", function () {
+    expect(res.getStatus()).to.equal(202);
+    expect(res.getBody().estado).to.equal("EN_CANCELACION");
+  });
+
+  test("compensacion: la cita vuelve a AGENDADA", function () {
+    expect(bru.getVar("estadoTrasSaga")).to.equal("AGENDADA");
+  });
+}

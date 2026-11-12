@@ -10,6 +10,8 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -28,8 +30,15 @@ class CitaServiceConFalsoTest {
 	private static final Clock RELOJ = Clock.fixed(DIEZ.minusDays(1).toInstant(ZoneOffset.UTC), ZoneId.of("UTC"));
 
 	private final RepositorioCitasFalso repositorio = new RepositorioCitasFalso();
+	private final List<UUID> citasEnCancelacionPublicadas = new ArrayList<>();
 	private final CitaService service = new CitaService(repositorio, new CitaFactory(RELOJ),
-			new DisponibilidadService());
+			new DisponibilidadService(), cita -> citasEnCancelacionPublicadas.add(cita.getId()));
+
+	/** Atajo para los tests que solo necesitan una cita ya cancelada: inicia la Saga y la confirma. */
+	private void cancelarDelTodo(UUID id) {
+		service.cancelar(id);
+		service.confirmarCancelacion(id);
+	}
 
 	@Test
 	void agendaYRecuperaUnaCitaSinNingunaDependenciaDeSpringNiDeBaseDeDatos() {
@@ -53,7 +62,7 @@ class CitaServiceConFalsoTest {
 	void cancelarLiberaElCupoParaOtroPaciente() {
 		var cita = service.agendar("pac-1", "med-1", "Cardiología", DIEZ, DIEZ.plusMinutes(30));
 
-		service.cancelar(cita.getId());
+		cancelarDelTodo(cita.getId());
 		var otra = service.agendar("pac-2", "med-1", "Cardiología", DIEZ, DIEZ.plusMinutes(30));
 
 		assertEquals(EstadoCita.CANCELADA, service.buscarPorId(cita.getId()).getEstado());
@@ -76,7 +85,7 @@ class CitaServiceConFalsoTest {
 		var tarde = service.agendar("pac-1", "med-1", "Cardiología", DIEZ.plusHours(4), DIEZ.plusHours(4).plusMinutes(30));
 		var manana = service.agendar("pac-2", "med-1", "Cardiología", DIEZ, DIEZ.plusMinutes(30));
 		var cancelada = service.agendar("pac-3", "med-1", "Cardiología", DIEZ.plusHours(1), DIEZ.plusHours(1).plusMinutes(30));
-		service.cancelar(cancelada.getId());
+		cancelarDelTodo(cancelada.getId());
 		service.agendar("pac-4", "med-1", "Cardiología", DIEZ.plusDays(1), DIEZ.plusDays(1).plusMinutes(30));
 		service.agendar("pac-5", "med-2", "Pediatría", DIEZ, DIEZ.plusMinutes(30));
 
@@ -96,7 +105,7 @@ class CitaServiceConFalsoTest {
 	void laAlertaDeUrgenciaAltaPriorizaLaCitaPeroNoUnaCancelada() {
 		var cita = service.agendar("pac-1", "med-1", "Cardiología", DIEZ, DIEZ.plusMinutes(30));
 		var cancelada = service.agendar("pac-2", "med-1", "Cardiología", DIEZ.plusHours(1), DIEZ.plusHours(1).plusMinutes(30));
-		service.cancelar(cancelada.getId());
+		cancelarDelTodo(cancelada.getId());
 
 		service.priorizar(cita.getId());
 
@@ -108,10 +117,36 @@ class CitaServiceConFalsoTest {
 	void existeCitaEntreMedicoYPacienteSoloSiNoEstaCancelada() {
 		service.agendar("pac-1", "med-1", "Cardiología", DIEZ, DIEZ.plusMinutes(30));
 		var cancelada = service.agendar("pac-2", "med-1", "Cardiología", DIEZ.plusHours(1), DIEZ.plusHours(1).plusMinutes(30));
-		service.cancelar(cancelada.getId());
+		cancelarDelTodo(cancelada.getId());
 
 		assertTrue(service.existeCitaEntre("med-1", "pac-1"));
 		assertFalse(service.existeCitaEntre("med-1", "pac-2"));
 		assertFalse(service.existeCitaEntre("med-2", "pac-1"));
+	}
+
+	@Test
+	void cancelarIniciaLaSagaPublicaElEventoYMantieneElCupoOcupado() {
+		var cita = service.agendar("pac-1", "med-1", "Cardiología", DIEZ, DIEZ.plusMinutes(30));
+
+		var enCancelacion = service.cancelar(cita.getId());
+
+		assertEquals(EstadoCita.EN_CANCELACION, enCancelacion.getEstado());
+		assertEquals(List.of(cita.getId()), citasEnCancelacionPublicadas);
+		assertThrows(FranjaNoDisponibleException.class,
+				() -> service.agendar("pac-2", "med-1", "Cardiología", DIEZ, DIEZ.plusMinutes(30)));
+		assertThrows(IllegalStateException.class, () -> service.cancelar(cita.getId()));
+	}
+
+	@Test
+	void laCompensacionDevuelveLaCitaReprogramadaASuEstadoAnterior() {
+		var cita = service.agendar("pac-1", "med-1", "Cardiología", DIEZ, DIEZ.plusMinutes(30));
+		service.reprogramar(cita.getId(), DIEZ.plusHours(1), DIEZ.plusHours(1).plusMinutes(30));
+		service.cancelar(cita.getId());
+
+		var compensada = service.compensarCancelacion(cita.getId());
+
+		assertEquals(EstadoCita.REPROGRAMADA, compensada.getEstado());
+		assertTrue(compensada.estaActiva());
+		assertThrows(IllegalStateException.class, () -> service.confirmarCancelacion(cita.getId()));
 	}
 }
