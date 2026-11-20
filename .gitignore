@@ -32,3 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 .idea/
+
+### Archivos de evaluacion del curso (no forman parte del proyecto) ###
+VerificarProyecto.java
+VerificarTalleres.java
+informe-verificacion-*.md
+*.docx
+outputs/
